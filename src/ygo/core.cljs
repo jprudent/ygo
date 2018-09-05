@@ -35,11 +35,11 @@
     (concat n (rest m))))
 
 (defn deep-fusions [cards]
- (if (not-empty cards)
-   (for [[a b fusioned] (all-fusions cards)
-         :let [new-cards (conj (->> cards
-			            (remove-one a) 
-                                    (remove-one b))
-                               fusioned)]]
-      (conj (deep-fusions new-cards) fusioned))
-   nil))  
+  (mapcat 
+    (fn [[a b fusioned :as fusioned-ab]]
+      (let [new-cards (conj (->> cards
+                                 (remove-one a) 
+                                 (remove-one b))
+                            fusioned)]
+        (conj (deep-fusions new-cards) fusioned-ab)))
+  (all-fusions cards)))

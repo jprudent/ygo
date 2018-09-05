@@ -38,3 +38,17 @@
              (sut/all-fusions [dragon-piper 
                                hibikime 
                                blue-winged-clown]))))
+
+(t/deftest deep-fusion-test
+    (t/is (empty? (sut/deep-fusions [])))
+    (t/is (empty? (sut/deep-fusions [white-dragon])))
+    (t/is (empty? (sut/deep-fusions [white-dragon dragon-piper])))
+    (t/is (= [[dragon-piper hibikime flame-swordsman]]
+             (sut/deep-fusions [dragon-piper
+                                hibikime])))
+    (t/is (= [[dragon-piper hibikime flame-swordsman]
+              [flame-swordsman blue-winged-clown crimson-sunbird]
+              [dragon-piper blue-winged-clown crimson-sunbird]]
+             (sut/deep-fusions [dragon-piper
+                                hibikime
+                                blue-winged-clown]))))
