@@ -14,12 +14,11 @@
 
 (defn fusion [{id1 :Id fusions :Fusions :as card1}
               {id2 :Id :as card2}]
-  (->> 
-   (filter (fn [{:keys [_card1 _card2]}]
-            (and (= _card1 id1) (= _card2 id2)))
-          fusions)
-   (map (fn [{:keys [_result]} ](find-by-id _result)))
-   (first)))  
+  (->> fusions
+       (filter (fn [{:keys [_card1 _card2]}]
+                 (and (= _card1 id1) (= _card2 id2))))
+       (map (fn [{:keys [_result]} ] (find-by-id _result)))
+       (first)))  
 
 (defn all-fusions [cards]
   (for [i (range (count cards))
@@ -30,16 +29,16 @@
         :when fusioned]
     [a b fusioned]))
 
-(defn remove-one [card coll]
+(defn- remove-one [card coll]
   (let [[n m] (split-with #(= card %) coll )]
     (concat n (rest m))))
 
 (defn deep-fusions [cards]
   (mapcat 
     (fn [[a b fusioned :as fusioned-ab]]
-      (let [new-cards (conj (->> cards
-                                 (remove-one a) 
-                                 (remove-one b))
-                            fusioned)]
+      (let [new-cards (as-> cards cards
+                            (remove-one a cards) 
+                            (remove-one b cards)
+                            (conj cards fusioned))]
         (conj (deep-fusions new-cards) fusioned-ab)))
   (all-fusions cards)))
