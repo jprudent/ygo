@@ -23,11 +23,9 @@
 
 (defn all-fusions [cards]
   (for [i (range (count cards))
-        :let [as (drop i cards)]
-        a as
+        :let [a (first (drop i cards))]
         j (range (inc i) (count cards))
-        :let [bs (drop j cards)]
-        b bs
+        :let [b (first (drop j cards))]
         :let [fusioned (or (fusion a b) (fusion b a))]
         :when fusioned]
     [a b fusioned]))

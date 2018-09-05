@@ -1,2 +1,3 @@
 {:deps {org.clojure/clojurescript {:mvn/version "1.10.339"}}
- :aliases {:scripting {:extra-deps {cheshire {:mvn/version "5.8.0"}}}}}
+ :aliases {:scripting {:extra-deps {cheshire {:mvn/version "5.8.0"}}}
+           :test {:extra-paths ["test"]}}}
