@@ -48,14 +48,16 @@
     (shallow-fusions cards)))
 
 (defn all-fusions [hand board]
-  (reduce
+  (->> (reduce
     (fn [fusions [_ _ hand-card :as hand-fusion]]
       (concat fusions 
               [hand-fusion]
               (for [board-card board
                     :let [board-fusion (fusion board-card hand-card)]
                     :when board-fusion]
-                board-fusion)))
+                [board-card hand-card board-fusion])))
     []
-    (deep-fusions hand)))
+    (concat (deep-fusions hand) (map #(vector nil nil %) hand)))
+    (sort-by (fn [[_ _ fusioned]] 
+      (+ (:Attack fusioned) (:Defense fusioned))))))
 

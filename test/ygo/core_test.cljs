@@ -12,6 +12,9 @@
 ;; =
 (def crimson-sunbird (sut/find-by-id 467))
 
+;; blue-winged-clown + flame-viper = crimson-sunbird
+(def flame-viper (sut/find-by-id 644))
+
 ;; white dragon has no fusions
 (def white-dragon (sut/find-by-id 1))
 
@@ -52,3 +55,8 @@
              (sut/deep-fusions [dragon-piper
                                 hibikime
                                 blue-winged-clown]))))
+
+(t/deftest all-fusions-test
+    (t/is (= []
+        (sut/all-fusions [dragon-piper hibikime blue-winged-clown]
+             [flame-viper]))))
