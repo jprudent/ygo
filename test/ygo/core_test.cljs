@@ -28,14 +28,14 @@
         (t/is (= flame-swordsman (sut/fusion dragon-piper hibikime)))
         (t/is (= crimson-sunbird (sut/fusion flame-swordsman blue-winged-clown))))
 
-(t/deftest all-fusions-test
-    (t/is (empty? (sut/all-fusions [])))
-    (t/is (empty? (sut/all-fusions [dragon-piper])))
+(t/deftest shallow-fusions-test
+    (t/is (empty? (sut/shallow-fusions [])))
+    (t/is (empty? (sut/shallow-fusions [dragon-piper])))
     (t/is (= [[dragon-piper hibikime flame-swordsman]]
-             (sut/all-fusions [dragon-piper hibikime])))
+             (sut/shallow-fusions [dragon-piper hibikime])))
     (t/is (= [[dragon-piper hibikime flame-swordsman]
               [dragon-piper blue-winged-clown crimson-sunbird]]
-             (sut/all-fusions [dragon-piper 
+             (sut/shallow-fusions [dragon-piper 
                                hibikime 
                                blue-winged-clown]))))
 

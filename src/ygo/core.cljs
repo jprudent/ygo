@@ -20,12 +20,12 @@
        (map (fn [{:keys [_result]} ] (find-by-id _result)))
        (first)))  
 
-(defn all-fusions [cards]
+(defn shallow-fusions [cards]
   (for [i (range (count cards))
         :let [a (first (drop i cards))]
         j (range (inc i) (count cards))
-        :let [b (first (drop j cards))]
-        :let [fusioned (or (fusion a b) (fusion b a))]
+        :let [b (first (drop j cards))
+              fusioned (or (fusion a b) (fusion b a))]
         :when fusioned]
     [a b fusioned]))
 
@@ -41,4 +41,4 @@
                             (remove-one b cards)
                             (conj cards fusioned))]
         (conj (deep-fusions new-cards) fusioned-ab)))
-  (all-fusions cards)))
+  (shallow-fusions cards)))
