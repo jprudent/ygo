@@ -42,19 +42,21 @@
                                hibikime 
                                blue-winged-clown]))))
 
+(def empty-deep-fusion {:fusion-children []})
 (t/deftest deep-fusion-test
-    (t/is (empty? (sut/deep-fusions [])))
-    (t/is (empty? (sut/deep-fusions [white-dragon])))
-    (t/is (empty? (sut/deep-fusions [white-dragon dragon-piper])))
-    (t/is (= [[dragon-piper hibikime flame-swordsman]]
+    (t/is (= empty-deep-fusion (sut/deep-fusions [])))
+    (t/is (= empty-deep-fusion (sut/deep-fusions [white-dragon])))
+    (t/is (= empty-deep-fusion (sut/deep-fusions [white-dragon dragon-piper])))
+    (t/is (=  {:fusion-children [{:fusion [dragon-piper hibikime flame-swordsman]
+                                  :fusion-children []}]}
              (sut/deep-fusions [dragon-piper
                                 hibikime])))
-    (t/is (= [[dragon-piper hibikime flame-swordsman]
-              [flame-swordsman blue-winged-clown crimson-sunbird]
-              [dragon-piper blue-winged-clown crimson-sunbird]]
-             (sut/deep-fusions [dragon-piper
-                                hibikime
-                                blue-winged-clown]))))
+    (t/is (= {:fusion-children [{:fusion [dragon-piper hibikime flame-swordsman]
+                                 :fusion-children [{:fusion [flame-swordsman blue-winged-clown crimson-sunbird]
+                                                    :fusion-children []}]}
+                                {:fusion [dragon-piper blue-winged-clown crimson-sunbird]
+                                 :fusion-children []}]}
+             (sut/deep-fusions [dragon-piper hibikime blue-winged-clown]))))
 
 (t/deftest all-fusions-test
   (let [r (sut/all-fusions [dragon-piper hibikime blue-winged-clown]
@@ -65,7 +67,7 @@
                               [flame-viper blue-winged-clown crimson-sunbird]]
               :fusion-children [{:fusion [dragon-piper hibikime flame-swordsman]
                                  :fusion-children [{:fusion [flame-swordsman blue-winged-clown crimson-sunbird]
-                                                    :children []}]}
+                                                    :fusion-children []}]}
                                 {:fusion [dragon-piper blue-winged-clown crimson-sunbird]
                                  :fusion-children []}]}
         (sut/all-fusions [dragon-piper hibikime blue-winged-clown]
