@@ -47,17 +47,33 @@
         (conj (deep-fusions new-cards) fusioned-ab)))
     (shallow-fusions cards)))
 
-(defn all-fusions [hand board]
-  (->> (reduce
+(defn- compute-board-fusions [fusions board]
+  (reduce
     (fn [fusions [_ _ hand-card :as hand-fusion]]
       (concat fusions 
-              [hand-fusion]
               (for [board-card board
                     :let [board-fusion (fusion board-card hand-card)]
                     :when board-fusion]
                 [board-card hand-card board-fusion])))
     []
-    (concat (deep-fusions hand) (map #(vector nil nil %) hand)))
-    (sort-by (fn [[_ _ fusioned]] 
-      (+ (:Attack fusioned) (:Defense fusioned))))))
+    fusions))
 
+(defn by-power [[_ _ fusioned]] 
+  (+ (:Attack fusioned) (:Defense fusioned)))
+
+(defn all-fusions [hand board]
+  (let [hand-fusions (deep-fusions hand)
+        all-hand-fusions (concat hand-fusions 
+                                (map #(vector nil nil %) hand))
+        board-fusions (compute-board-fusions all-hand-fusions board)]
+    { :hand hand
+      :board board
+      :hand-fusions hand-fusions
+      :board-fusions board-fusions}))
+
+(defn card? [x] (and (map? x) (contains? x :Attack)))
+
+(defn transform-cards [cards f]
+  (clojure.walk/postwalk 
+    (fn [x] (if (card? x) (f x) x))
+    cards))
