@@ -57,6 +57,16 @@
                                 blue-winged-clown]))))
 
 (t/deftest all-fusions-test
-    (t/is (= []
+  (let [r (sut/all-fusions [dragon-piper hibikime blue-winged-clown]
+                           [flame-viper])]
+    (t/is (= {:hand [dragon-piper hibikime blue-winged-clown]
+              :board [flame-viper]
+              :board-fusions [[flame-viper hibikime flame-swordsman]
+                              [flame-viper blue-winged-clown crimson-sunbird]]
+              :fusion-children [{:fusion [dragon-piper hibikime flame-swordsman]
+                                 :fusion-children [{:fusion [flame-swordsman blue-winged-clown crimson-sunbird]
+                                                    :children []}]}
+                                {:fusion [dragon-piper blue-winged-clown crimson-sunbird]
+                                 :fusion-children []}]}
         (sut/all-fusions [dragon-piper hibikime blue-winged-clown]
-             [flame-viper]))))
+             [flame-viper])))))

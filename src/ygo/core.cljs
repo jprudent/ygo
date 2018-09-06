@@ -37,15 +37,21 @@
   (let [[n m] (split-with #(= card %) coll )]
     (concat n (rest m))))
 
-(defn deep-fusions [cards]
-  (mapcat 
-    (fn [[a b fusioned :as fusioned-ab]]
-      (let [new-cards (as-> cards cards
-                            (remove-one a cards) 
-                            (remove-one b cards)
-                            (conj cards fusioned))]
-        (conj (deep-fusions new-cards) fusioned-ab)))
-    (shallow-fusions cards)))
+(defn merge-fusion [cards [a b fusioned :as fusioned-ab]]
+  (as-> cards cards
+    (remove-one a cards) 
+    (remove-one b cards)
+    (conj cards fusioned)))
+
+(defn deep-fusions 
+  ([cards] (deep-fusions {} cards))
+  ([acc cards]
+  (assoc acc :fusion-children 
+    (map
+      (fn [fusioned-ab]
+        (let [new-cards (merge-fusion cards fusioned-ab)]
+          (deep-fusions {:fusion fusioned-ab} new-cards)))
+    (shallow-fusions cards)))))
 
 (defn- compute-board-fusions [fusions board]
   (reduce
@@ -58,18 +64,20 @@
     []
     fusions))
 
-(defn by-power [[_ _ fusioned]] 
+(defn power [[_ _ fusioned]] 
   (+ (:Attack fusioned) (:Defense fusioned)))
 
+(def sort-by-power (partial sort-by power))
+
 (defn all-fusions [hand board]
-  (let [hand-fusions (deep-fusions hand)
+  (let [hand-fusions (deep-fusions {} hand)
         all-hand-fusions (concat hand-fusions 
                                 (map #(vector nil nil %) hand))
         board-fusions (compute-board-fusions all-hand-fusions board)]
-    { :hand hand
+    (into { :hand hand
       :board board
-      :hand-fusions hand-fusions
-      :board-fusions board-fusions}))
+      :board-fusions board-fusions}
+      hand-fusions)))
 
 (defn card? [x] (and (map? x) (contains? x :Attack)))
 
