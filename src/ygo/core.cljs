@@ -1,13 +1,18 @@
 (ns ygo.core
   (:require [ygo.cards :as cards]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.pprint :as pp]))
 
 (defn subsi? [s sub]
   (let [re (re-pattern (str ".*" (str/lower-case sub) ".*"))]
     (re-matches re (str/lower-case s))))
 
+(defn exact-match? [sub {:keys [Name]}] (= (str/lower-case Name) sub))
+
 (defn find-by-name [name-fragment]
-  (filter #(subsi? (:Name %) name-fragment ) cards/cards))
+ (let [partial-match (filter #(subsi? (:Name %) name-fragment ) cards/cards)]
+   (or (not-empty (filter (partial exact-match? name-fragment) partial-match))
+       partial-match)))
 
 (defn find-by-id [id]
   (first (filter #(= id (:Id %)) cards/cards)))
@@ -24,6 +29,19 @@
 (defn fusion [card1 card2]
   (or (fusion* card1 card2) (fusion* card2 card1)))  
 
+(defn- remove-one [card coll]
+  (let [[n m] (split-with #(not= card %) coll )]
+    (concat n (rest m))))
+
+(defn fusions-for [with-card cards]
+  (println "fusion for" (:Name with-card) (map :Name (remove-one with-card cards)))
+  (println "org" (map :Name cards))
+  (for [card (remove-one with-card cards)
+        :let [fusioned (fusion with-card card)]
+        :when fusioned]
+    [with-card card fusioned]))
+
+;;todo use fusions fora
 (defn shallow-fusions [cards]
   (for [i (range (count cards))
         :let [a (first (drop i cards))]
@@ -33,25 +51,27 @@
         :when fusioned]
     [a b fusioned]))
 
-(defn- remove-one [card coll]
-  (let [[n m] (split-with #(= card %) coll )]
-    (concat n (rest m))))
-
 (defn merge-fusion [cards [a b fusioned :as fusioned-ab]]
   (as-> cards cards
     (remove-one a cards) 
     (remove-one b cards)
     (conj cards fusioned)))
 
+
 (defn deep-fusions 
-  ([cards] (deep-fusions {} cards))
-  ([acc cards]
+  ([cards] (deep-fusions {} cards nil))
+  ([acc cards with-card]
+  (println "cards" (map :Name cards))
+  (println "with" (:Name with-card))
   (assoc acc :fusion-children 
     (map
-      (fn [fusioned-ab]
+      (fn [[_ _ fusioned :as fusioned-ab]]
+        (println "fusion" (map :Name fusioned-ab))
         (let [new-cards (merge-fusion cards fusioned-ab)]
-          (deep-fusions {:fusion fusioned-ab} new-cards)))
-    (shallow-fusions cards)))))
+          (deep-fusions {:fusion fusioned-ab} new-cards fusioned)))
+    (if with-card 
+        (fusions-for with-card cards)
+        (shallow-fusions cards))))))
 
 (defn- compute-board-fusions [fusions board]
   (reduce
@@ -70,14 +90,14 @@
 (def sort-by-power (partial sort-by power))
 
 (defn all-fusions [hand board]
-  (let [hand-fusions (deep-fusions {} hand)
+  (let [hand-fusions (deep-fusions {} hand nil)
         all-hand-fusions (concat hand-fusions 
                                 (map #(vector nil nil %) hand))
         board-fusions (compute-board-fusions all-hand-fusions board)]
     (into { :hand hand
-      :board board
-      :board-fusions board-fusions}
-      hand-fusions)))
+            :board board
+            :board-fusions board-fusions}
+          hand-fusions)))
 
 (defn card? [x] (and (map? x) (contains? x :Attack)))
 
@@ -85,3 +105,15 @@
   (clojure.walk/postwalk 
     (fn [x] (if (card? x) (f x) x))
     cards))
+
+(defn the-only [cs]
+  (if (= 1 (count cs))
+    (first cs)
+    (throw (ex-info (str "not unique" {:cards (transform-cards cs :Name)}){:cards cs}))))
+
+(defn c [hand board]
+ (let [hand (map (comp the-only find-by-name) hand)
+       board (map (comp the-only find-by-name) board)]
+       (-> (all-fusions hand board)
+	(transform-cards (juxt :Name :Attack :Defense))
+	(pp/pprint))))
