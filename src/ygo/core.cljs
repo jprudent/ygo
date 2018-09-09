@@ -57,18 +57,27 @@
     (remove-one b cards)
     (conj cards fusioned)))
 
+(defn fusion-id [[a b _ ]]
+  (+ (+ 800 (js/parseInt (:Id a)))
+     (js/parseInt (:Id b))))
 
 (defn deep-fusions 
-  ([cards] (deep-fusions {} cards nil))
-  ([acc cards with-card]
+  ([cards] (deep-fusions {} cards nil nil))
+  ([acc cards with-card parent-fusion-id]
   (println "cards" (map :Name cards))
   (println "with" (:Name with-card))
   (assoc acc :fusion-children 
     (map
-      (fn [[_ _ fusioned :as fusioned-ab]]
+      (fn [[a b fusioned :as fusioned-ab]]
         (println "fusion" (map :Name fusioned-ab))
-        (let [new-cards (merge-fusion cards fusioned-ab)]
-          (deep-fusions {:fusion fusioned-ab} new-cards fusioned)))
+        (let [new-cards (merge-fusion cards fusioned-ab)
+              fusion-id (fusion-id fusioned-ab)]
+          (deep-fusions {:fusion fusioned-ab 
+                         :fusion-id fusion-id
+                         :parent-fusion-id parent-fusion-id} 
+                        new-cards 
+                        fusioned
+                        fusion-id)))
     (if with-card 
         (fusions-for with-card cards)
         (shallow-fusions cards))))))
@@ -90,7 +99,7 @@
 (def sort-by-power (partial sort-by power))
 
 (defn all-fusions [hand board]
-  (let [hand-fusions (deep-fusions {} hand nil)
+  (let [hand-fusions (deep-fusions {} hand nil nil)
         all-hand-fusions (concat hand-fusions 
                                 (map #(vector nil nil %) hand))
         board-fusions (compute-board-fusions all-hand-fusions board)]
@@ -106,14 +115,3 @@
     (fn [x] (if (card? x) (f x) x))
     cards))
 
-(defn the-only [cs]
-  (if (= 1 (count cs))
-    (first cs)
-    (throw (ex-info (str "not unique" {:cards (transform-cards cs :Name)}){:cards cs}))))
-
-(defn c [hand board]
- (let [hand (map (comp the-only find-by-name) hand)
-       board (map (comp the-only find-by-name) board)]
-       (-> (all-fusions hand board)
-	(transform-cards (juxt :Name :Attack :Defense))
-	(pp/pprint))))
